@@ -42,7 +42,7 @@ import org.jgroups.util.Responses;
  *
  * @author Radoslav Husar
  */
-public class AZURE_PING extends FILE_PING {
+public class AZURE_PING extends FILE_PINGx {
 
     private static final Log log = LogFactory.getLog(AZURE_PING.class);
 
