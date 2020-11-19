@@ -21,7 +21,9 @@ jobs:
 #      - uses: kabir/play-action/temp-pre-build@master
 
       - run: echo ${{github.ref}}
-      - run: echo ${{github}}
+      - run: echo ${{github.head_ref}}
+      - run: echo ${{github.base_ref}}
+      - run: echo ${{github.action.ref}}
 
       - uses: actions/checkout@v2
 
