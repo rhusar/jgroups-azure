@@ -20,6 +20,9 @@ jobs:
     steps:
 #      - uses: kabir/play-action/temp-pre-build@master
 
+      - run: echo ${{github.ref}}
+      - run: echo ${{github}}
+
       - uses: actions/checkout@v2
 
       - uses: actions/setup-java@v1
