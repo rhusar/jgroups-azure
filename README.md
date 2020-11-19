@@ -1,3 +1,5 @@
+ignore
+
 # JGroups Azure
 
 [![Build Status](https://travis-ci.org/jgroups-extras/jgroups-azure.svg?branch=master)](https://travis-ci.org/jgroups-extras/jgroups-azure)
