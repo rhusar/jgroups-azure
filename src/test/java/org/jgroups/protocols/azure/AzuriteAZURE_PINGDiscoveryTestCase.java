@@ -54,7 +54,9 @@ public class AzuriteAZURE_PINGDiscoveryTestCase extends AbstractAZURE_PINGDiscov
         // Using 'latest' here often breaks the tests.
         // The version will have to be explicitly managed here for reproducible builds/CI.
         // n.b. for reference https://mcr.microsoft.com/en-us/artifact/mar/azure-storage/azurite/tags
-        azurite = new GenericContainer<>("mcr.microsoft.com/azure-storage/azurite:3.33.0")
+        // n.b. --skipApiVersionCheck is needed because Azurite doesn't yet support the 2026-02-06 API version used by the latest SDK
+        azurite = new GenericContainer<>("mcr.microsoft.com/azure-storage/azurite:3.35.0")
+                .withCommand("azurite-blob", "--blobHost", "0.0.0.0", "--skipApiVersionCheck")
                 .withExposedPorts(AZURITE_BLOB_PORT);
         azurite.start();
 

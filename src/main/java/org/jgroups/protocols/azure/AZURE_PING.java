@@ -18,18 +18,17 @@ package org.jgroups.protocols.azure;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.net.URI;
 import java.util.List;
 
-import com.microsoft.azure.storage.CloudStorageAccount;
-import com.microsoft.azure.storage.StorageCredentials;
-import com.microsoft.azure.storage.StorageUri;
-import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
-import com.microsoft.azure.storage.blob.CloudBlob;
-import com.microsoft.azure.storage.blob.CloudBlobClient;
-import com.microsoft.azure.storage.blob.CloudBlobContainer;
-import com.microsoft.azure.storage.blob.CloudBlockBlob;
-import com.microsoft.azure.storage.blob.ListBlobItem;
+import com.azure.core.util.BinaryData;
+import com.azure.identity.DefaultAzureCredentialBuilder;
+import com.azure.storage.blob.BlobClient;
+import com.azure.storage.blob.BlobContainerClient;
+import com.azure.storage.blob.BlobServiceClient;
+import com.azure.storage.blob.BlobServiceClientBuilder;
+import com.azure.storage.blob.models.BlobItem;
+import com.azure.storage.blob.models.ListBlobsOptions;
+import com.azure.storage.common.StorageSharedKeyCredential;
 import org.jgroups.Address;
 import org.jgroups.annotations.Property;
 import org.jgroups.conf.ClassConfigurator;
@@ -40,7 +39,7 @@ import org.jgroups.protocols.PingData;
 import org.jgroups.util.Responses;
 
 /**
- * Implementation of PING protocols for AZURE using Storage Blobs. See /DESIGN.md for design.
+ * Implementation of a {@link org.jgroups.protocols.Discovery} protocol for Microsoft Azure using Blob Service as cluster information store.
  *
  * @author Radoslav Husar
  */
@@ -51,7 +50,7 @@ public class AZURE_PING extends FILE_PING {
     @Property(description = "The name of the storage account.")
     protected String storage_account_name;
 
-    @Property(description = "The secret account access key.", exposeAsManagedAttribute = false)
+    @Property(description = "The secret account access key. If not specified, DefaultAzureCredential is used instead.", exposeAsManagedAttribute = false)
     protected String storage_access_key;
 
     @Property(description = "Container to store ping information in. Must be valid DNS name.")
@@ -63,13 +62,13 @@ public class AZURE_PING extends FILE_PING {
     @Property(description = "The endpointSuffix to use.")
     protected String endpoint_suffix;
 
+    // n.b. primarily used for testing with Azurite where the endpoint needs to be overridden; exposed here for more configuration flexibility
     @Property(description = "The full blob service endpoint URI. When set, overrides use_https and endpoint_suffix.")
-    // n.b. primarily used for testing with Azurite where the endpoint needs to be overridden
     protected String blob_storage_uri;
 
     public static final int STREAM_BUFFER_SIZE = 4096;
 
-    private CloudBlobContainer containerReference;
+    private BlobContainerClient containerClient;
 
     static {
         ClassConfigurator.addProtocol((short) 530, AZURE_PING.class);
@@ -84,18 +83,31 @@ public class AZURE_PING extends FILE_PING {
         this.validateConfiguration();
 
         try {
-            StorageCredentials credentials = new StorageCredentialsAccountAndKey(storage_account_name, storage_access_key);
-            CloudStorageAccount storageAccount;
-            if (blob_storage_uri != null && !blob_storage_uri.isEmpty()) {
-                storageAccount = new CloudStorageAccount(credentials, new StorageUri(new URI(blob_storage_uri)), null, null);
-            } else if (endpoint_suffix != null) {
-                storageAccount = new CloudStorageAccount(credentials, use_https, endpoint_suffix);
+            BlobServiceClientBuilder builder = new BlobServiceClientBuilder();
+
+            // Set credential: use shared key if access key is provided, otherwise fall back to DefaultAzureCredential
+            if (storage_access_key != null) {
+                builder.credential(new StorageSharedKeyCredential(storage_account_name, storage_access_key));
             } else {
-                storageAccount = new CloudStorageAccount(credentials, use_https);
+                try {
+                    builder.credential(new DefaultAzureCredentialBuilder().build());
+                } catch (NoClassDefFoundError e) {
+                    throw new IllegalStateException("DefaultAzureCredential requires 'com.azure:azure-identity' dependency on the classpath.", e);
+                }
             }
-            CloudBlobClient blobClient = storageAccount.createCloudBlobClient();
-            containerReference = blobClient.getContainerReference(container);
-            boolean created = containerReference.createIfNotExists();
+
+            // Set endpoint
+            if (blob_storage_uri != null && !blob_storage_uri.isEmpty()) {
+                builder.endpoint(blob_storage_uri);
+            } else {
+                String suffix = (endpoint_suffix != null) ? endpoint_suffix : "core.windows.net";
+                String protocol = use_https ? "https" : "http";
+                builder.endpoint(String.format("%s://%s.blob.%s", protocol, storage_account_name, suffix));
+            }
+
+            BlobServiceClient blobServiceClient = builder.buildClient();
+            containerClient = blobServiceClient.getBlobContainerClient(container);
+            boolean created = containerClient.createIfNotExists();
 
             if (created) {
                 log.info("Created container named '%s'.", container);
@@ -115,9 +127,9 @@ public class AZURE_PING extends FILE_PING {
                 || container.startsWith("-") || container.length() < 3 || container.length() > 63) {
             throw new IllegalArgumentException("Container name must be configured and must meet Azure requirements (must be a valid DNS name).");
         }
-        // Account name and access key must be both configured for write access
-        if (storage_account_name == null || storage_access_key == null) {
-            throw new IllegalArgumentException("Account name and key must be configured.");
+        // Account name must be configured
+        if (storage_account_name == null) {
+            throw new IllegalArgumentException("Account name must be configured.");
         }
         // Let's inform users here that https would be preferred
         if (!use_https) {
@@ -140,18 +152,14 @@ public class AZURE_PING extends FILE_PING {
 
         String prefix = sanitize(clustername);
 
-        Iterable<ListBlobItem> listBlobItems = containerReference.listBlobs(prefix);
-        for (ListBlobItem blobItem : listBlobItems) {
+        ListBlobsOptions options = new ListBlobsOptions().setPrefix(prefix);
+        for (BlobItem blobItem : containerClient.listBlobs(options, null)) {
             try {
-                // If the item is a blob and not a virtual directory.
-                // n.b. what an ugly API this is
-                if (blobItem instanceof CloudBlob) {
-                    CloudBlob blob = (CloudBlob) blobItem;
-                    ByteArrayOutputStream os = new ByteArrayOutputStream(STREAM_BUFFER_SIZE);
-                    blob.download(os);
-                    byte[] pingBytes = os.toByteArray();
-                    parsePingData(pingBytes, members, responses);
-                }
+                BlobClient blobClient = containerClient.getBlobClient(blobItem.getName());
+                ByteArrayOutputStream os = new ByteArrayOutputStream(STREAM_BUFFER_SIZE);
+                blobClient.downloadStream(os);
+                byte[] pingBytes = os.toByteArray();
+                parsePingData(pingBytes, members, responses);
             } catch (Exception t) {
                 log.error("Error fetching ping data.");
             }
@@ -197,8 +205,8 @@ public class AZURE_PING extends FILE_PING {
             byte[] data = out.toByteArray();
 
             // Upload the file
-            CloudBlockBlob blob = containerReference.getBlockBlobReference(filename);
-            blob.upload(new ByteArrayInputStream(data), data.length);
+            BlobClient blobClient = containerClient.getBlobClient(filename);
+            blobClient.upload(BinaryData.fromBytes(data), true);
 
         } catch (Exception ex) {
             log.error("Error marshalling and uploading ping data.", ex);
@@ -215,8 +223,8 @@ public class AZURE_PING extends FILE_PING {
         String filename = addressToFilename(clustername, addr);
 
         try {
-            CloudBlockBlob blob = containerReference.getBlockBlobReference(filename);
-            boolean deleted = blob.deleteIfExists();
+            BlobClient blobClient = containerClient.getBlobClient(filename);
+            boolean deleted = blobClient.deleteIfExists();
 
             if (deleted) {
                 log.debug("Tried to delete file '%s' but it was already deleted.", filename);
@@ -237,18 +245,15 @@ public class AZURE_PING extends FILE_PING {
 
         clustername = sanitize(clustername);
 
-        Iterable<ListBlobItem> listBlobItems = containerReference.listBlobs(clustername);
-        for (ListBlobItem blobItem : listBlobItems) {
+        ListBlobsOptions options = new ListBlobsOptions().setPrefix(clustername);
+        for (BlobItem blobItem : containerClient.listBlobs(options, null)) {
             try {
-                // If the item is a blob and not a virtual directory.
-                if (blobItem instanceof CloudBlob) {
-                    CloudBlob blob = (CloudBlob) blobItem;
-                    boolean deleted = blob.deleteIfExists();
-                    if (deleted) {
-                        log.trace("Deleted file '%s'.", blob.getName());
-                    } else {
-                        log.debug("Tried to delete file '%s' but it was already deleted.", blob.getName());
-                    }
+                BlobClient blobClient = containerClient.getBlobClient(blobItem.getName());
+                boolean deleted = blobClient.deleteIfExists();
+                if (deleted) {
+                    log.trace("Deleted file '%s'.", blobItem.getName());
+                } else {
+                    log.debug("Tried to delete file '%s' but it was already deleted.", blobItem.getName());
                 }
             } catch (Exception e) {
                 log.error("Error deleting ping data for cluster '" + clustername + "'.", e);
