@@ -14,137 +14,128 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>org.jboss</groupId>
         <artifactId>jboss-parent</artifactId>
-        <version>51</version>
+        <version>52</version>
+        <relativePath />
     </parent>
 
     <groupId>org.jgroups.azure</groupId>
-    <artifactId>jgroups-azure-parent</artifactId>
-    <version>2.0.3.Final-SNAPSHOT</version>
-    <packaging>pom</packaging>
+    <artifactId>jgroups-azure</artifactId>
+    <version>3.0.0.Final-SNAPSHOT</version>
+    <packaging>jar</packaging>
 
-    <name>JGroups Azure (parent)</name>
+    <name>JGroups Azure</name>
     <description>Implementation of the JGroups Discovery protocol for Azure based on blob storage service.</description>
     <url>https://github.com/jgroups-extras/jgroups-azure</url>
-
-    <modules>
-        <module>azure</module>
-    </modules>
-
-    <licenses>
-        <license>
-            <name>The Apache License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-        </license>
-    </licenses>
 
     <developers>
         <developer>
             <name>Radoslav Husar</name>
             <email>rhusar@redhat.com</email>
-            <url>http://radoslavhusar.com/</url>
-            <organization>Red Hat Inc.</organization>
-            <organizationUrl>https://www.redhat.com/</organizationUrl>
+            <roles>
+                <role>developer</role>
+                <role>maintainer</role>
+            </roles>
+            <url>https://github.com/rhusar</url>
+            <organization>IBM</organization>
+            <organizationUrl>https://www.ibm.com</organizationUrl>
         </developer>
     </developers>
 
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
     <scm>
-        <connection>scm:git:git@github.com:jgroups-extras/jgroups-azure.git</connection>
-        <developerConnection>scm:git:git@github.com:jgroups-extras/jgroups-azure.git</developerConnection>
-        <url>git@github.com:jgroups-extras/jgroups-azure.git</url>
+        <connection>scm:git:git://github.com/jgroups-extras/jgroups-azure.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jgroups-extras/jgroups-azure.git</developerConnection>
+        <url>https://github.com/jgroups-extras/jgroups-azure</url>
         <tag>HEAD</tag>
     </scm>
 
+    <issueManagement>
+        <system>GitHub Issues</system>
+        <url>https://github.com/jgroups-extras/jgroups-azure/issues</url>
+    </issueManagement>
+
+    <ciManagement>
+        <system>GitHub Actions</system>
+        <url>https://github.com/jgroups-extras/jgroups-azure/actions</url>
+    </ciManagement>
+
     <properties>
-        <version.org.jgroups>5.3.23.Final</version.org.jgroups>
+        <!-- JBoss Parent overrides -->
+        <maven.compiler.release>17</maven.compiler.release>
+        <jdk.min.version>${maven.compiler.release}</jdk.min.version>
+        <nexus.staging.tag>${project.groupId}-${project.version}</nexus.staging.tag>
+
+        <!-- https://mvnrepository.com/artifact/org.jgroups/jgroups -->
+        <version.org.jgroups>5.5.4.Final</version.org.jgroups>
+        <!-- https://mvnrepository.com/artifact/com.microsoft.azure/azure-storage -->
         <version.com.microsoft.azure.azure-storage>8.6.6</version.com.microsoft.azure.azure-storage>
 
         <!-- Overridden versions as managed by WildFly -->
         <version.com.fasterxml.jackson>2.21.2</version.com.fasterxml.jackson> <!-- azure-storage uses 2.6.0 -->
         <version.org.slf4j>2.0.17</version.org.slf4j> <!-- azure-storage uses 1.7.12 -->
-
-        <!-- JDK 11 -->
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.jgroups</groupId>
-                <artifactId>jgroups</artifactId>
-                <version>${version.org.jgroups}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.microsoft.azure</groupId>
-                <artifactId>azure-storage</artifactId>
-                <version>${version.com.microsoft.azure.azure-storage}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>*</groupId>
-                        <artifactId>*</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
+    <dependencies>
+        <dependency>
+            <groupId>org.jgroups</groupId>
+            <artifactId>jgroups</artifactId>
+            <version>${version.org.jgroups}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.microsoft.azure</groupId>
+            <artifactId>azure-storage</artifactId>
+            <version>${version.com.microsoft.azure.azure-storage}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${version.com.fasterxml.jackson}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${version.org.slf4j}</version>
+        </dependency>
 
-            <!-- Override azure-storage dependencies versions with WildFly-managed ones -->
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-core</artifactId>
-                <version>${version.com.fasterxml.jackson}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>${version.org.slf4j}</version>
-            </dependency>
-
-            <!-- Test dependencies -->
-            <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <version>4.13.2</version>
-                <scope>test</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>enforce-java</id>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <rules>
-                        <requireJavaVersion>
-                            <!-- Require Java 11 or higher -->
-                            <version>[11,)</version>
-                        </requireJavaVersion>
-                    </rules>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
                 <configuration>
-                    <autoVersionSubmodules>true</autoVersionSubmodules>
                     <tagNameFormat>@{project.version}</tagNameFormat>
-                    <arguments>-DskipTests=true -Dmaven.test.skip=true -Dmaven.javadoc.skip=true</arguments>
-                    <preparationGoals>clean</preparationGoals>
+                    <arguments>-DskipTests</arguments>
+                    <!-- Temporarily until Nexus stabilizes keep SCM pushes manual -->
+                    <pushChanges>false</pushChanges>
+                    <localCheckout>true</localCheckout>
                 </configuration>
             </plugin>
         </plugins>

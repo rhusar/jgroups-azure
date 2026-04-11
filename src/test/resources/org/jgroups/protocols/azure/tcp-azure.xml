@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2022 Red Hat Inc., and individual contributors
+  ~ Copyright 2025 Red Hat Inc., and individual contributors
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
   -->
 
 <!--
-  Formatted copy of the original ~/.m2/repository/org/jgroups/jgroups/5.2.8.Final/jgroups-5.2.8.Final.jar!/tcp.xml
-  reconfigured to use AZURE_PING instead of TCPPING.
+  Formatted copy of the original jgroups-5.5.4.Final.jar!/tcp.xml reconfigured to use AZURE_PING.
 -->
 
 <!--
@@ -28,32 +27,27 @@
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:org:jgroups"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups.xsd">
-    <TCP bind_addr="${jgroups.bind_addr:site_local}"
-         bind_port="${jgroups.bind_port:7800}"
-         external_addr="${jgroups.external_addr}"
-         external_port="${jgroups.external_port}"
-         thread_pool.min_threads="0"
-         thread_pool.max_threads="200"
-         thread_pool.keep_alive_time="30000"/>
-    <RED/>
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.5.xsd">
+    <include file="${transport-config:tcp-default.xml}"/>
     <azure.AZURE_PING storage_account_name="${azure.account_name}"
                       storage_access_key="${azure.access_key}"
                       container="${azure.container:ping}"/>
-    <MERGE3 min_interval="10000"
-            max_interval="30000"/>
+    <MERGE3 min_interval="10s"
+            max_interval="30s"/>
     <FD_SOCK2/>
-    <FD_ALL3 timeout="40000" interval="5000"/>
-    <VERIFY_SUSPECT2 timeout="1500"/>
+    <FD_ALL3 timeout="40s"
+             interval="5s"/>
+    <VERIFY_SUSPECT2 timeout="1.5s"/>
     <BARRIER/>
     <pbcast.NAKACK2 use_mcast_xmit="false"/>
     <UNICAST3/>
-    <pbcast.STABLE desired_avg_gossip="50000"
+    <pbcast.STABLE desired_avg_gossip="50s"
                    max_bytes="4M"/>
-    <pbcast.GMS print_local_addr="true" join_timeout="2000"/>
-    <UFC max_credits="2M"
+    <pbcast.GMS print_local_addr="true"
+                join_timeout="2s"/>
+    <MFC max_credits="10M"
          min_threshold="0.4"/>
-    <MFC max_credits="2M"
+    <UFC max_credits="10M"
          min_threshold="0.4"/>
     <FRAG2 frag_size="60K"/>
     <pbcast.STATE_TRANSFER/>
