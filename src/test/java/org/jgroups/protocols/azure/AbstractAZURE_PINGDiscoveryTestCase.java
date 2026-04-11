@@ -24,7 +24,6 @@ import java.util.concurrent.TimeUnit;
 import org.jgroups.JChannel;
 import org.jgroups.util.Util;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Test;
 
 /**
@@ -32,7 +31,7 @@ import org.junit.Test;
  *
  * @author Radoslav Husar
  */
-public class AZURE_PINGDiscoveryTest {
+public abstract class AbstractAZURE_PINGDiscoveryTestCase {
 
     public static final String STACK_XML_CONFIGURATION = "org/jgroups/protocols/azure/tcp-azure.xml";
     public static final int CHANNEL_COUNT = 5;
@@ -41,23 +40,23 @@ public class AZURE_PINGDiscoveryTest {
     // credentials (e.g. running JDK8 and JDK9 on the CI).
     public static final String RANDOM_CLUSTER_NAME = UUID.randomUUID().toString();
 
+    // Captured at class-load time, before any test's @BeforeClass can set these properties (e.g. Azurite test).
+    private static final boolean GENUINE_CREDENTIALS_AVAILABLE =
+            System.getProperty("azure.access_key") != null && System.getProperty("azure.account_name") != null;
+
+    static boolean areGenuineCredentialsAvailable() {
+        return GENUINE_CREDENTIALS_AVAILABLE;
+    }
+
     @Test
     public void testDiscovery() throws Exception {
-        assumeCredentials();
-
         discover(RANDOM_CLUSTER_NAME);
     }
 
     @Test
     public void testDiscoveryObscureClusterName() throws Exception {
-        assumeCredentials();
-
         String obscureClusterName = "``\\//--+ěščřžýáíé==''!@#$%^&*()_{}<>?";
         discover(obscureClusterName + RANDOM_CLUSTER_NAME);
-    }
-
-    private static void assumeCredentials() {
-        Assume.assumeTrue("Credentials are not available, test is ignored!", System.getProperty("azure.access_key") != null && System.getProperty("azure.account_name") != null);
     }
 
     private void discover(String clusterName) throws Exception {

@@ -31,7 +31,8 @@
     <include file="${transport-config:tcp-default.xml}"/>
     <azure.AZURE_PING storage_account_name="${azure.account_name}"
                       storage_access_key="${azure.access_key}"
-                      container="${azure.container:ping}"/>
+                      container="${azure.container:ping}"
+                      blob_storage_uri="${azure.blob_storage_uri:}"/>
     <MERGE3 min_interval="10s"
             max_interval="30s"/>
     <FD_SOCK2/>
