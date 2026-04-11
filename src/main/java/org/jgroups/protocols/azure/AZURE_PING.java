@@ -18,10 +18,12 @@ package org.jgroups.protocols.azure;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.net.URI;
 import java.util.List;
 
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageCredentials;
+import com.microsoft.azure.storage.StorageUri;
 import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
 import com.microsoft.azure.storage.blob.CloudBlob;
 import com.microsoft.azure.storage.blob.CloudBlobClient;
@@ -61,6 +63,10 @@ public class AZURE_PING extends FILE_PING {
     @Property(description = "The endpointSuffix to use.")
     protected String endpoint_suffix;
 
+    @Property(description = "The full blob service endpoint URI. When set, overrides use_https and endpoint_suffix.")
+    // n.b. primarily used for testing with Azurite where the endpoint needs to be overridden
+    protected String blob_storage_uri;
+
     public static final int STREAM_BUFFER_SIZE = 4096;
 
     private CloudBlobContainer containerReference;
@@ -80,7 +86,9 @@ public class AZURE_PING extends FILE_PING {
         try {
             StorageCredentials credentials = new StorageCredentialsAccountAndKey(storage_account_name, storage_access_key);
             CloudStorageAccount storageAccount;
-            if (endpoint_suffix != null) {
+            if (blob_storage_uri != null && !blob_storage_uri.isEmpty()) {
+                storageAccount = new CloudStorageAccount(credentials, new StorageUri(new URI(blob_storage_uri)), null, null);
+            } else if (endpoint_suffix != null) {
                 storageAccount = new CloudStorageAccount(credentials, use_https, endpoint_suffix);
             } else {
                 storageAccount = new CloudStorageAccount(credentials, use_https);
@@ -111,9 +119,9 @@ public class AZURE_PING extends FILE_PING {
         if (storage_account_name == null || storage_access_key == null) {
             throw new IllegalArgumentException("Account name and key must be configured.");
         }
-        // Lets inform users here that https would be preferred
+        // Let's inform users here that https would be preferred
         if (!use_https) {
-            log.info("Configuration is using HTTP, consider switching to HTTPS instead.");
+            log.warn("Configuration is using HTTP, consider switching to HTTPS instead.");
         }
 
     }
