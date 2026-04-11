@@ -9,13 +9,13 @@ Azure Java SDK.
 
 ### Properties
 
-Property name          | Description                                                     | Required / Default value
----------------------- | --------------------------------------------------------------- | ------------------------
-`storage_account_name` | The name of the storage account.                                | _Required._
-`storage_access_key`   | The secret account access key.                                  | _Required._
-`container`            | Container to store ping information in. Must be valid DNS name. | _Required._
-`use_https`            | Whether or not to use HTTPS to connect to Azure.                | `true`
-`endpoint_suffix`      | The endpointSuffix to use.                                      |
+| Property name          | Description                                                     | Required / Default value |
+|------------------------|-----------------------------------------------------------------|--------------------------|
+| `storage_account_name` | The name of the storage account.                                | _Required._              |
+| `storage_access_key`   | The secret account access key.                                  | _Required._              |
+| `container`            | Container to store ping information in. Must be valid DNS name. | _Required._              |
+| `use_https`            | Whether or not to use HTTPS to connect to Azure.                | `true`                   |
+| `endpoint_suffix`      | The endpointSuffix to use.                                      |                          |
 
 ### WildFly 10.1 or later / JBoss EAP 7.0 or later
 
@@ -97,16 +97,15 @@ If valid credentials are not provided, tests requiring them are skipped.
 
 ## Support Matrix
 
-Version (branch) | JGroups version | Azure Storage version | Java version
----------------- | --------------- | --------------------- | ------------
-3.x              | 5.5.x           | TBD                   | 17          
-2.x              | 5.1.x - 5.4.x   | 8.6.6                 | 11          
-1.3.x            | 4.2.x           | 8.6.6                 | 8
-1.2.x            | 4.0.x           | 6.1.0                 | 8
-1.1.x            | 3.6.13.Final    | 5.0.0                 | 8
-1.0.x            | 3.6.7.Final     | 4.0.0                 | 7
-0.9.x            | 3.2.16.Final    | 5.0.0                 | 6
-
+| Version (branch) | JGroups version | Azure Storage version | Java version |
+|------------------|-----------------|-----------------------|--------------|
+| 3.x              | 5.5.x           | TBD                   | 17           |
+| 2.x              | 5.1.x - 5.4.x   | 8.6.6                 | 11           |
+| 1.3.x            | 4.2.x           | 8.6.6                 | 8            |
+| 1.2.x            | 4.0.x           | 6.1.0                 | 8            |
+| 1.1.x            | 3.6.13.Final    | 5.0.0                 | 8            |
+| 1.0.x            | 3.6.7.Final     | 4.0.0                 | 7            |
+| 0.9.x            | 3.2.16.Final    | 5.0.0                 | 6            |
 
 ## License
 
