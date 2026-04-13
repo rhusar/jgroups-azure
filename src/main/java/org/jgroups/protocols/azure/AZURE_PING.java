@@ -86,7 +86,7 @@ public class AZURE_PING extends FILE_PING {
             BlobServiceClientBuilder builder = new BlobServiceClientBuilder();
 
             // Set credential: use shared key if access key is provided, otherwise fall back to DefaultAzureCredential
-            if (storage_access_key != null) {
+            if (storage_access_key != null && !storage_access_key.isEmpty()) {
                 builder.credential(new StorageSharedKeyCredential(storage_account_name, storage_access_key));
             } else {
                 try {
