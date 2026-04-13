@@ -161,7 +161,7 @@ public class AZURE_PING extends FILE_PING {
                 byte[] pingBytes = os.toByteArray();
                 parsePingData(pingBytes, members, responses);
             } catch (Exception t) {
-                log.error("Error fetching ping data.");
+                log.error("Error fetching ping data.", t);
             }
         }
     }
