@@ -75,6 +75,13 @@ public class AZURE_PING extends FILE_PING {
         ClassConfigurator.addProtocol((short) 530, AZURE_PING.class);
     }
 
+    public AZURE_PING() {
+        super();
+
+        // Disable shutdown hook by default
+        this.register_shutdown_hook = false;
+    }
+
     @Override
     public void init() throws Exception {
         super.init();
