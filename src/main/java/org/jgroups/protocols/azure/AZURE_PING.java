@@ -47,28 +47,38 @@ public class AZURE_PING extends FILE_PING {
 
     private static final Log log = LogFactory.getLog(AZURE_PING.class);
 
-    @Property(description = "The name of the storage account.")
+    @Property(description = "The name of the storage account.",
+            systemProperty = "JGROUPS_AZURE_STORAGE_ACCOUNT_NAME")
     protected String storage_account_name;
 
-    @Property(description = "The secret account access key. If not specified, DefaultAzureCredential is used instead.", exposeAsManagedAttribute = false)
+    @Property(description = "The secret account access key. If not specified, DefaultAzureCredential is used instead.",
+            systemProperty = "JGROUPS_AZURE_STORAGE_ACCESS_KEY",
+            exposeAsManagedAttribute = false)
     protected String storage_access_key;
 
-    @Property(description = "Azure Storage connection string. When set, overrides storage_account_name, storage_access_key, use_https, endpoint_suffix, and blob_storage_uri.", exposeAsManagedAttribute = false)
+    @Property(description = "Azure Storage connection string. When set, overrides storage_account_name, storage_access_key, use_https, endpoint_suffix, and blob_storage_uri.",
+            systemProperty = "JGROUPS_AZURE_CONNECTION_STRING",
+            exposeAsManagedAttribute = false)
     protected String connection_string;
 
-    @Property(description = "Container to store ping information in. Must be a valid DNS name as it becomes part of the Azure blob storage URL.")
+    @Property(description = "Container to store ping information in. Must be a valid DNS name as it becomes part of the Azure blob storage URL.",
+            systemProperty = "JGROUPS_AZURE_CONTAINER")
     protected String container;
 
-    @Property(description = "Whether or not to use HTTPS to connect to Azure.")
+    @Property(description = "Whether or not to use HTTPS to connect to Azure.",
+            systemProperty = "JGROUPS_AZURE_USE_HTTPS")
     protected boolean use_https = true;
 
-    @Property(description = "The endpointSuffix to use.")
-    protected String endpoint_suffix;
+    @Property(description = "The endpointSuffix to use.",
+            systemProperty = "JGROUPS_AZURE_ENDPOINT_SUFFIX")
+    protected String endpoint_suffix = DEFAULT_ENDPOINT_SUFFIX;
 
-    // n.b. primarily used for testing with Azurite where the endpoint needs to be overridden; exposed here for more configuration flexibility
-    @Property(description = "The full blob service endpoint URI. When set, overrides use_https and endpoint_suffix.")
+    @Property(description = "The full blob service endpoint URI. When set, overrides use_https and endpoint_suffix.",
+            systemProperty = "JGROUPS_AZURE_BLOB_STORAGE_URI",
+            exposeAsManagedAttribute = false)
     protected String blob_storage_uri;
 
+    private static final String DEFAULT_ENDPOINT_SUFFIX = "core.windows.net";
     private static final String CLUSTER_ADDRESS_FILE_NAME_SEPARATOR = "-";
     public static final int STREAM_BUFFER_SIZE = 4096;
 
@@ -114,7 +124,7 @@ public class AZURE_PING extends FILE_PING {
                 if (blob_storage_uri != null && !blob_storage_uri.isEmpty()) {
                     builder.endpoint(blob_storage_uri);
                 } else {
-                    String suffix = (endpoint_suffix != null) ? endpoint_suffix : "core.windows.net";
+                    String suffix = (endpoint_suffix != null && !endpoint_suffix.isEmpty()) ? endpoint_suffix : DEFAULT_ENDPOINT_SUFFIX;
                     String protocol = use_https ? "https" : "http";
                     builder.endpoint(String.format("%s://%s.blob.%s", protocol, storage_account_name, suffix));
                 }
