@@ -228,9 +228,9 @@ public class AZURE_PING extends FILE_PING {
             boolean deleted = blobClient.deleteIfExists();
 
             if (deleted) {
-                log.debug("Tried to delete file '%s' but it was already deleted.", filename);
+                log.debug("Deleted file '%s'.", filename);
             } else {
-                log.trace("Deleted file '%s'.", filename);
+                log.debug("Tried to delete file '%s' but it was already deleted.", filename);
             }
 
         } catch (Exception ex) {
@@ -252,12 +252,12 @@ public class AZURE_PING extends FILE_PING {
                 BlobClient blobClient = containerClient.getBlobClient(blobItem.getName());
                 boolean deleted = blobClient.deleteIfExists();
                 if (deleted) {
-                    log.trace("Deleted file '%s'.", blobItem.getName());
+                    log.debug("Deleted file '%s'.", blobItem.getName());
                 } else {
                     log.debug("Tried to delete file '%s' but it was already deleted.", blobItem.getName());
                 }
             } catch (Exception e) {
-                log.error("Error deleting ping data for cluster '" + clustername + "'.", e);
+                log.error(String.format("Error deleting ping data for cluster '%s'.", clustername), e);
             }
         }
     }
