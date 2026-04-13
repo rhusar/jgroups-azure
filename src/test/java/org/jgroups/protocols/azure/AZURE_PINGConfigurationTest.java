@@ -44,6 +44,13 @@ public class AZURE_PINGConfigurationTest {
         azure.validateConfiguration();
     }
 
+    @Test
+    public void testValidationWithoutAccessKey() {
+        azure.storage_account_name = "myaccount";
+        azure.container = "mycontainer";
+        azure.validateConfiguration();
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testValidationWrongContainerName() {
         azure.storage_account_name = "myaccount";
