@@ -186,7 +186,7 @@ public class AZURE_PING extends FILE_PING {
                 byte[] pingBytes = os.toByteArray();
                 parsePingData(pingBytes, members, responses);
             } catch (Exception t) {
-                log.error("Error fetching ping data.", t);
+                log.error(String.format("Error fetching/reading ping data file '%s'.", blobItem.getName()), t);
             }
         }
     }
@@ -252,13 +252,13 @@ public class AZURE_PING extends FILE_PING {
             boolean deleted = blobClient.deleteIfExists();
 
             if (deleted) {
-                log.debug("Deleted file '%s'.", filename);
+                log.debug("Deleted ping data file '%s'.", filename);
             } else {
-                log.debug("Tried to delete file '%s' but it was already deleted.", filename);
+                log.debug("Tried to delete ping data file '%s' but it was already deleted.", filename);
             }
 
         } catch (Exception ex) {
-            log.error("Error deleting files.", ex);
+            log.error(String.format("Error deleting ping data file '%s'.", filename), ex);
         }
     }
 
@@ -276,12 +276,12 @@ public class AZURE_PING extends FILE_PING {
                 BlobClient blobClient = containerClient.getBlobClient(blobItem.getName());
                 boolean deleted = blobClient.deleteIfExists();
                 if (deleted) {
-                    log.debug("Deleted file '%s'.", blobItem.getName());
+                    log.debug("Deleted ping data file '%s'.", blobItem.getName());
                 } else {
-                    log.debug("Tried to delete file '%s' but it was already deleted.", blobItem.getName());
+                    log.debug("Tried to delete ping data file '%s' but it was already deleted.", blobItem.getName());
                 }
             } catch (Exception e) {
-                log.error(String.format("Error deleting ping data for cluster '%s'.", clustername), e);
+                log.error(String.format("Error deleting ping data file for cluster '%s'.", clustername), e);
             }
         }
     }
