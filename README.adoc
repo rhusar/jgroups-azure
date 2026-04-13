@@ -10,16 +10,49 @@ Azure Java SDK.
 
 === Properties
 
+[align="left",cols="3,1,10",options="header"]
 |===
-|Property name |Description |Required / Default value 
+| Attribute Name +
+Environment variable
+| Default
+| Description
 
-|`storage_account_name` |The name of the storage account. |_Required (unless `connection_string` is set)._
-|`storage_access_key` |The secret account access key. If not specified, `DefaultAzureCredential` is used instead. |_Optional._
-|`connection_string` |Azure Storage connection string. When set, overrides `storage_account_name`, `storage_access_key`, `use_https`, `endpoint_suffix`, and `blob_storage_uri`. |_Optional._
-|`container` |Container to store ping information in. Must be a valid DNS name as it becomes part of the Azure blob storage URL. |_Required._
-|`use_https` |Whether or not to use HTTPS to connect to Azure. |`true`
-|`endpoint_suffix` |The endpointSuffix to use. |
-|`blob_storage_uri` |The full blob service endpoint URI. When set, overrides `use_https` and `endpoint_suffix`. |
+| `container` +
+Environment variable: `JGROUPS_AZURE_CONTAINER`
+| *required*
+| Container to store ping information in. Must be a valid DNS name as it becomes part of the Azure blob storage URL.
+
+| `storage_account_name` +
+Environment variable: `JGROUPS_AZURE_STORAGE_ACCOUNT_NAME`
+| *required* (unless `connection_string` is set)
+| The name of the storage account.
+
+| `storage_access_key` +
+Environment variable: `JGROUPS_AZURE_STORAGE_ACCESS_KEY`
+|
+| The secret account access key. If not specified, `DefaultAzureCredential` is used instead.
+
+| `use_https` +
+Environment variable: `JGROUPS_AZURE_USE_HTTPS`
+| `true`
+| Whether or not to use HTTPS to connect to Azure.
+
+| `endpoint_suffix` +
+Environment variable: `JGROUPS_AZURE_ENDPOINT_SUFFIX`
+| `core.windows.net`
+| The endpointSuffix to use.
+
+| `blob_storage_uri` +
+Environment variable: `JGROUPS_AZURE_BLOB_STORAGE_URI`
+|
+| The full blob service endpoint URI. When set, overrides `use_https` and `endpoint_suffix`.
+
+
+| `connection_string` +
+Environment variable: `JGROUPS_AZURE_CONNECTION_STRING`
+|
+| Azure Storage connection string. When set, overrides `storage_account_name`, `storage_access_key`, `use_https`, `endpoint_suffix`, and `blob_storage_uri`.
+
 |===
 
 === WildFly 10.1 or later / JBoss EAP 7.0 or later
