@@ -13,8 +13,9 @@ Azure Java SDK.
 |===
 |Property name |Description |Required / Default value 
 
-|`storage_account_name` |The name of the storage account. |_Required._
+|`storage_account_name` |The name of the storage account. |_Required (unless `connection_string` is set)._
 |`storage_access_key` |The secret account access key. If not specified, `DefaultAzureCredential` is used instead. |_Optional._
+|`connection_string` |Azure Storage connection string. When set, overrides `storage_account_name`, `storage_access_key`, `use_https`, `endpoint_suffix`, and `blob_storage_uri`. |_Optional._
 |`container` |Container to store ping information in. Must be a valid DNS name as it becomes part of the Azure blob storage URL. |_Required._
 |`use_https` |Whether or not to use HTTPS to connect to Azure. |`true`
 |`endpoint_suffix` |The endpointSuffix to use. |
@@ -98,7 +99,7 @@ Or use Maven wrapper for convenience:
 
 == Testing
 
-To run all tests, credentials for Azure are expected. These can be supplied using test properties:
+To run all tests, credentials for Azure are expected. These can be supplied either using individual properties for tests:
 
 ----
 export account_name=foo
@@ -106,7 +107,16 @@ export access_key=bar
 mvn test -Dazure.account_name="${account_name}" -Dazure.access_key="${access_key}" -Djava.net.preferIPv4Stack=true
 ----
 
-If valid credentials are not provided, tests requiring them are skipped.
+or a connection string can be used:
+
+----
+mvn test -Dazure.connection_string="DefaultEndpointsProtocol=https;AccountName=...;AccountKey=...;EndpointSuffix=core.windows.net"
+----
+
+If valid credentials are not provided, tests that require them are skipped (using `org.junit.Assume`).
+
+There are also variants of the tests that run against a mock Blob service running in a container.
+To run those tests, a valid podman/Docker environment is required.
 
 == Support Matrix
 

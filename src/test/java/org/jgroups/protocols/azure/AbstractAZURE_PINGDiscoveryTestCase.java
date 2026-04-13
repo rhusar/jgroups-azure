@@ -27,7 +27,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Functional tests for AZURE_PING discovery.
+ * Base class for functional tests for AZURE_PING discovery.
+ * All implementations of this class only configure properties that are consumed by the stack file (tcp-azure.xml).
  *
  * @author Radoslav Husar
  */
@@ -37,12 +38,12 @@ public abstract class AbstractAZURE_PINGDiscoveryTestCase {
     public static final int CHANNEL_COUNT = 5;
 
     // The cluster names need to randomized so that multiple test runs can be run in parallel with the same
-    // credentials (e.g. running JDK8 and JDK9 on the CI).
+    // credentials (e.g. running JDK 17 and JDK 25 in CI).
     public static final String RANDOM_CLUSTER_NAME = UUID.randomUUID().toString();
 
     // Captured at class-load time, before any test's @BeforeClass can set these properties (e.g. Azurite test).
-    private static final boolean GENUINE_CREDENTIALS_AVAILABLE =
-            System.getProperty("azure.access_key") != null && System.getProperty("azure.account_name") != null;
+    private static final boolean GENUINE_CREDENTIALS_AVAILABLE = System.getProperty("azure.connection_string") != null ||
+            (System.getProperty("azure.access_key") != null && System.getProperty("azure.account_name") != null);
 
     static boolean areGenuineCredentialsAvailable() {
         return GENUINE_CREDENTIALS_AVAILABLE;

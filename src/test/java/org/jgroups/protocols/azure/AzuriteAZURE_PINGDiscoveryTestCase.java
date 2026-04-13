@@ -16,32 +16,57 @@
 
 package org.jgroups.protocols.azure;
 
+import static org.junit.Assert.fail;
+
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.jgroups.util.Util;
 import org.junit.AfterClass;
 import org.junit.Assume;
+import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
 
-import static org.junit.Assert.fail;
-
 /**
- * Tests against a containerized Azurite service.
+ * Tests against a containerized Azurite service using both blob_storage_uri and connection_string.
  *
  * @author Radoslav Husar
  */
+@RunWith(Parameterized.class)
 public class AzuriteAZURE_PINGDiscoveryTestCase extends AbstractAZURE_PINGDiscoveryTestCase {
 
+    public enum ConfigurationType {
+        BLOB_STORAGE_URI,
+        CONNECTION_STRING,
+    }
+
+    // These are fixed; well-known configuration properties for Azurite container
     private static final String AZURITE_ACCOUNT_NAME = "devstoreaccount1";
     private static final String AZURITE_ACCOUNT_KEY = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";
     private static final int AZURITE_BLOB_PORT = 10000;
-    private static final String[] PROPERTY_KEYS = {"azure.blob_storage_uri", "azure.account_name", "azure.access_key", "azure.container"};
+
+    // All known property keys used in the tcp-azure.xml stack file
+    private static final String[] PROPERTY_KEYS = {"azure.connection_string", "azure.blob_storage_uri", "azure.account_name", "azure.access_key", "azure.container"};
 
     private static GenericContainer<?> azurite;
     private static final Map<String, String> savedProperties = new HashMap<>();
+
+    @Parameterized.Parameters(name = "{0}")
+    public static Collection<ConfigurationType> data() {
+        return Arrays.asList(ConfigurationType.values());
+    }
+
+    private final ConfigurationType configurationType;
+
+    public AzuriteAZURE_PINGDiscoveryTestCase(ConfigurationType configurationType) {
+        this.configurationType = configurationType;
+    }
 
     @BeforeClass
     public static void setUp() {
@@ -61,21 +86,34 @@ public class AzuriteAZURE_PINGDiscoveryTestCase extends AbstractAZURE_PINGDiscov
         azurite.start();
 
         // Save existing properties to restore after tests
-        for (String key : PROPERTY_KEYS) {
-            savedProperties.put(key, System.getProperty(key));
-        }
+        Arrays.stream(PROPERTY_KEYS).forEach(key -> savedProperties.put(key, System.getProperty(key)));
+    }
 
-        // Configure the protocol with Azurite well-known credentials and dynamic endpoint
-        String blobStorageUri = "http://" + azurite.getHost() + ":" + azurite.getMappedPort(AZURITE_BLOB_PORT) + "/" + AZURITE_ACCOUNT_NAME;
-        System.setProperty("azure.blob_storage_uri", blobStorageUri);
-        System.setProperty("azure.account_name", AZURITE_ACCOUNT_NAME);
-        System.setProperty("azure.access_key", AZURITE_ACCOUNT_KEY);
-        System.setProperty("azure.container", "ping");
+    @Before
+    public void setUpProperties() {
+        // Start each test with unset properties
+        Arrays.stream(PROPERTY_KEYS).forEach(System::clearProperty);
+
+        String blobEndpoint = "http://" + azurite.getHost() + ":" + azurite.getMappedPort(AZURITE_BLOB_PORT) + "/" + AZURITE_ACCOUNT_NAME;
+
+        switch (configurationType) {
+            case BLOB_STORAGE_URI:
+                // Configure using individual properties
+                System.setProperty("azure.blob_storage_uri", blobEndpoint);
+                System.setProperty("azure.account_name", AZURITE_ACCOUNT_NAME);
+                System.setProperty("azure.access_key", AZURITE_ACCOUNT_KEY);
+                break;
+            case CONNECTION_STRING:
+                // Configure using connection string; clear individual credential properties
+                String connectionString = String.format("DefaultEndpointsProtocol=http;AccountName=%s;AccountKey=%s;BlobEndpoint=%s", AZURITE_ACCOUNT_NAME, AZURITE_ACCOUNT_KEY, blobEndpoint);
+                System.setProperty("azure.connection_string", connectionString);
+                break;
+        }
     }
 
     @AfterClass
     public static void cleanup() {
-        // Restore original properties so that GenuineAZURE_PINGDiscoveryTestCase picks up genuine credentials
+        // Restore original properties so that GenuineAZURE_PINGDiscoveryTestCase picks up genuine credentials passed by the user
         for (Map.Entry<String, String> entry : savedProperties.entrySet()) {
             if (entry.getValue() != null) {
                 System.setProperty(entry.getKey(), entry.getValue());
