@@ -6,6 +6,8 @@ image:https://github.com/jgroups-extras/jgroups-azure/workflows/CI/badge.svg[CI,
 Implementation of Azure ping protocol using Azure Storage blobs for http://www.jgroups.org/[JGroups] project using official Microsoft
 Azure Java SDK.
 
+See the link:DESIGN.adoc[design] document for architecture and implementation details.
+
 == Configuration
 
 === Properties

@@ -1,46 +1,71 @@
-= AZURE_PING
+= azure.AZURE_PING
 
 Author: Radoslav Husar
 
 Version: June 2015
 
+Updated: April 2026 (for version 3.0)
+
 == Goal
 
-Goal is to provide efficient discovery implementation for Microsoft Windows Azure environment besides options such
-as JDBC_PING. It is based on blob storage.
+Goal is to provide efficient discovery implementation for Microsoft Azure environment besides options such as JDBC_PING.
+It is based on Blob Service as a cluster information store.
+The implementation uses official Azure SDK client and thus resides in jgroups-extras GitHub organization.
 
 == Usage
 
-To use AZURE_PING add the implementing protocol, org.jgroups.protocols.AZURE_PING, to the stack and configure the
-following properties needed to authenticate and use the Azure Storage service:
+To use AZURE_PING add the implementing protocol, `org.jgroups.protocols.azure.AZURE_PING`,
+to the stack and configure the following properties needed to authenticate and use the Azure Storage service:
 
-* container - the name of the container to use for ping data (required)
-* storage_account_name - the name of the storage account
-* storage_access_key - the secret access key
-* connection_string - alternatively, a connection string can be used instead of the above two properties
+* `container` - the name of the container to use for ping data; must be a valid DNS name (required)
+* `storage_account_name` - the name of the storage account (required unless `connection_string` is set)
+* `storage_access_key` - the secret account access key; if not specified, `DefaultAzureCredential` is used instead
+* `connection_string` - alternatively, a connection string can be used; when set, overrides `storage_account_name`,
+`storage_access_key`, `use_https`, `endpoint_suffix`, and `blob_storage_uri` (since 3.0)
+* `use_https` - whether or not to use HTTPS to connect to Azure (default: `true`)
+* `endpoint_suffix` - the endpoint suffix to use (default: `core.windows.net`) (since 2.0.2.Final)
+* `blob_storage_uri` - the full blob service endpoint URI; when set, overrides `use_https` and `endpoint_suffix` (since 3.0)
 
-To find out these values, do the following:
+All properties can also be configured via environment variables with the `JGROUPS_AZURE_` prefix
+(such as `JGROUPS_AZURE_CONTAINER`, `JGROUPS_AZURE_STORAGE_ACCOUNT_NAME`, etc). (since 3.0)
 
-. Navigate to the Azure management portal at https://manage.windowsazure.com/
-. Create new storage service via NEW → DATA SERVICES → STORAGE → QUICK CREATE and provide desired configuration
-. Navigate to STORAGE → (storage account name) → MANAGE ACCESS KEYS
+To find out the storage account values, do the following:
 
-_Described as of Azure console version June 2015._
+. Navigate to the Azure portal at https://portal.azure.com/
+. Create a new Storage account or navigate to an existing one
+. Navigate to "Security + networking" -> "Access keys" to retrieve the account name and access key or "Connection string"
 
 == Design
 
-Just like other cloud-based PING protocols, the implementation is based on the original FILE_PING. All ping information
-is stored in the configured storage container. If a container with that name does not exist, it will be
-automatically created.
+The implementation uses Azure Storage Blob SDK 12.x and extends FILE_PING.
+All ping information is stored in the configured storage container.
+If a container with that name does not exist, it will be automatically created.
 
 Within the container, ping data is stored in flat files with names constructed as:
-FILENAME = CLUSTER_NAME + "-" + ADDRESS
 
-The Azure client is embedded in the protocol implementation. The client itself uses a REST client underneath.
+`resulting_file_name = sanitized-cluster-name + "-" + sanitized-address`
+
+=== Authentication
+
+The protocol supports three authentication methods, evaluated in the following order:
+
+. If `connection_string` is set, it is used directly to connect to the storage service. (since 3.0)
+. If `storage_access_key` is provided, `StorageSharedKeyCredential` is used with the account name and key.
+. Otherwise, the protocol falls back to `DefaultAzureCredential` which supports managed identities, environment variables, and other Azure identity mechanisms.
+  This requires the `com.azure:azure-identity` dependency on the classpath. (since 3.0)
+
+=== Other Details
+
+The shutdown hook inherited from FILE_PING is disabled by default. (since 3.0)
+
+== Testing
+
+The test suite includes configuration validation unit tests as well as functional discovery tests.
+The functional tests run against both a live Azure Storage endpoint (when credentials are provided) and
+an emulated https://github.com/Azure/Azurite[Azurite] blob service running in a container.
 
 == Resources
 
-* Azure console - https://manage.windowsazure.com/
-* Azure documentation - https://azure.microsoft.com/en-us/documentation/
+* Azure portal - https://portal.azure.com/
+* Azure documentation - https://learn.microsoft.com/en-us/azure/storage/
 * Azure Java SDK on GitHub - https://github.com/Azure/azure-sdk-for-java
-* Azure JavaDoc - http://dl.windowsazure.com/javadoc/
