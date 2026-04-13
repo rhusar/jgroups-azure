@@ -15,7 +15,7 @@ Azure Java SDK.
 
 |`storage_account_name` |The name of the storage account. |_Required._
 |`storage_access_key` |The secret account access key. If not specified, `DefaultAzureCredential` is used instead. |_Optional._
-|`container` |Container to store ping information in. Must be valid DNS name. |_Required._
+|`container` |Container to store ping information in. Must be a valid DNS name as it becomes part of the Azure blob storage URL. |_Required._
 |`use_https` |Whether or not to use HTTPS to connect to Azure. |`true`
 |`endpoint_suffix` |The endpointSuffix to use. |
 |`blob_storage_uri` |The full blob service endpoint URI. When set, overrides `use_https` and `endpoint_suffix`. |

@@ -53,7 +53,7 @@ public class AZURE_PING extends FILE_PING {
     @Property(description = "The secret account access key. If not specified, DefaultAzureCredential is used instead.", exposeAsManagedAttribute = false)
     protected String storage_access_key;
 
-    @Property(description = "Container to store ping information in. Must be valid DNS name.")
+    @Property(description = "Container to store ping information in. Must be a valid DNS name as it becomes part of the Azure blob storage URL.")
     protected String container;
 
     @Property(description = "Whether or not to use HTTPS to connect to Azure.")
