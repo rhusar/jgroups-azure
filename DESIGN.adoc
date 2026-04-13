@@ -14,9 +14,10 @@ as JDBC_PING. It is based on blob storage.
 To use AZURE_PING add the implementing protocol, org.jgroups.protocols.AZURE_PING, to the stack and configure the
 following properties needed to authenticate and use the Azure Storage service:
 
+* container - the name of the container to use for ping data (required)
 * storage_account_name - the name of the storage account
 * storage_access_key - the secret access key
-* container - the name of the container to use for PING data
+* connection_string - alternatively, a connection string can be used instead of the above two properties
 
 To find out these values, do the following:
 

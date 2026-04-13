@@ -25,7 +25,7 @@ import org.junit.Test;
  */
 public class AZURE_PINGConfigurationTest {
 
-    private AZURE_PING azure;
+    private final AZURE_PING azure;
 
     public AZURE_PINGConfigurationTest() {
         azure = new AZURE_PING();
@@ -47,6 +47,29 @@ public class AZURE_PINGConfigurationTest {
     @Test
     public void testValidationWithoutAccessKey() {
         azure.storage_account_name = "myaccount";
+        azure.container = "mycontainer";
+        azure.validateConfiguration();
+    }
+
+    @Test
+    public void testValidationWithConnectionString() {
+        azure.connection_string = "DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net";
+        azure.storage_account_name = "myaccount";
+        azure.container = "mycontainer";
+        azure.validateConfiguration();
+    }
+
+    @Test
+    public void testValidationWithConnectionStringWithoutAccountName() {
+        azure.connection_string = "DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net";
+        azure.container = "mycontainer";
+        azure.validateConfiguration();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testValidationWithEmptyConnectionStringAndEmptyAccountName() {
+        azure.connection_string = "";
+        azure.storage_account_name = "";
         azure.container = "mycontainer";
         azure.validateConfiguration();
     }

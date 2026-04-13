@@ -53,6 +53,9 @@ public class AZURE_PING extends FILE_PING {
     @Property(description = "The secret account access key. If not specified, DefaultAzureCredential is used instead.", exposeAsManagedAttribute = false)
     protected String storage_access_key;
 
+    @Property(description = "Azure Storage connection string. When set, overrides storage_account_name, storage_access_key, use_https, endpoint_suffix, and blob_storage_uri.", exposeAsManagedAttribute = false)
+    protected String connection_string;
+
     @Property(description = "Container to store ping information in. Must be a valid DNS name as it becomes part of the Azure blob storage URL.")
     protected String container;
 
@@ -93,24 +96,28 @@ public class AZURE_PING extends FILE_PING {
         try {
             BlobServiceClientBuilder builder = new BlobServiceClientBuilder();
 
-            // Set credential: use shared key if access key is provided, otherwise fall back to DefaultAzureCredential
-            if (storage_access_key != null && !storage_access_key.isEmpty()) {
-                builder.credential(new StorageSharedKeyCredential(storage_account_name, storage_access_key));
+            if (connection_string != null && !connection_string.isEmpty()) {
+                builder.connectionString(connection_string);
             } else {
-                try {
-                    builder.credential(new DefaultAzureCredentialBuilder().build());
-                } catch (NoClassDefFoundError e) {
-                    throw new IllegalStateException("DefaultAzureCredential requires 'com.azure:azure-identity' dependency on the classpath.", e);
+                // Set credential: use shared key if access key is provided, otherwise fall back to DefaultAzureCredential
+                if (storage_access_key != null && !storage_access_key.isEmpty()) {
+                    builder.credential(new StorageSharedKeyCredential(storage_account_name, storage_access_key));
+                } else {
+                    try {
+                        builder.credential(new DefaultAzureCredentialBuilder().build());
+                    } catch (NoClassDefFoundError e) {
+                        throw new IllegalStateException("DefaultAzureCredential requires 'com.azure:azure-identity' dependency on the classpath.", e);
+                    }
                 }
-            }
 
-            // Set endpoint
-            if (blob_storage_uri != null && !blob_storage_uri.isEmpty()) {
-                builder.endpoint(blob_storage_uri);
-            } else {
-                String suffix = (endpoint_suffix != null) ? endpoint_suffix : "core.windows.net";
-                String protocol = use_https ? "https" : "http";
-                builder.endpoint(String.format("%s://%s.blob.%s", protocol, storage_account_name, suffix));
+                // Set endpoint
+                if (blob_storage_uri != null && !blob_storage_uri.isEmpty()) {
+                    builder.endpoint(blob_storage_uri);
+                } else {
+                    String suffix = (endpoint_suffix != null) ? endpoint_suffix : "core.windows.net";
+                    String protocol = use_https ? "https" : "http";
+                    builder.endpoint(String.format("%s://%s.blob.%s", protocol, storage_account_name, suffix));
+                }
             }
 
             BlobServiceClient blobServiceClient = builder.buildClient();
@@ -135,12 +142,12 @@ public class AZURE_PING extends FILE_PING {
                 || container.startsWith("-") || container.length() < 3 || container.length() > 63) {
             throw new IllegalArgumentException("Container name must be configured and must meet Azure requirements (must be a valid DNS name).");
         }
-        // Account name must be configured
-        if (storage_account_name == null) {
-            throw new IllegalArgumentException("Account name must be configured.");
+        // Either connection_string or storage_account_name must be configured
+        if ((connection_string == null || connection_string.isEmpty()) && (storage_account_name == null || storage_account_name.isEmpty())) {
+            throw new IllegalArgumentException("Either connection_string or storage_account_name must be configured.");
         }
         // Let's inform users here that https would be preferred
-        if (!use_https) {
+        if (!use_https && (connection_string == null || connection_string.isEmpty())) {
             log.warn("Configuration is using HTTP, consider switching to HTTPS instead.");
         }
 
