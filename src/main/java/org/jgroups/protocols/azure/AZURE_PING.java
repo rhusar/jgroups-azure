@@ -53,7 +53,7 @@ public class AZURE_PING extends FILE_PING {
     @Property(description = "The secret account access key. If not specified, DefaultAzureCredential is used instead.", exposeAsManagedAttribute = false)
     protected String storage_access_key;
 
-    @Property(description = "Container to store ping information in. Must be valid DNS name.")
+    @Property(description = "Container to store ping information in. Must be a valid DNS name as it becomes part of the Azure blob storage URL.")
     protected String container;
 
     @Property(description = "Whether or not to use HTTPS to connect to Azure.")
@@ -66,12 +66,20 @@ public class AZURE_PING extends FILE_PING {
     @Property(description = "The full blob service endpoint URI. When set, overrides use_https and endpoint_suffix.")
     protected String blob_storage_uri;
 
+    private static final String CLUSTER_ADDRESS_FILE_NAME_SEPARATOR = "-";
     public static final int STREAM_BUFFER_SIZE = 4096;
 
     private BlobContainerClient containerClient;
 
     static {
         ClassConfigurator.addProtocol((short) 530, AZURE_PING.class);
+    }
+
+    public AZURE_PING() {
+        super();
+
+        // Disable shutdown hook by default
+        this.register_shutdown_hook = false;
     }
 
     @Override
@@ -86,7 +94,7 @@ public class AZURE_PING extends FILE_PING {
             BlobServiceClientBuilder builder = new BlobServiceClientBuilder();
 
             // Set credential: use shared key if access key is provided, otherwise fall back to DefaultAzureCredential
-            if (storage_access_key != null) {
+            if (storage_access_key != null && !storage_access_key.isEmpty()) {
                 builder.credential(new StorageSharedKeyCredential(storage_account_name, storage_access_key));
             } else {
                 try {
@@ -150,7 +158,7 @@ public class AZURE_PING extends FILE_PING {
             return;
         }
 
-        String prefix = sanitize(clustername);
+        String prefix = getSanitizedPrefix(clustername);
 
         ListBlobsOptions options = new ListBlobsOptions().setPrefix(prefix);
         for (BlobItem blobItem : containerClient.listBlobs(options, null)) {
@@ -161,7 +169,7 @@ public class AZURE_PING extends FILE_PING {
                 byte[] pingBytes = os.toByteArray();
                 parsePingData(pingBytes, members, responses);
             } catch (Exception t) {
-                log.error("Error fetching ping data.");
+                log.error("Error fetching ping data.", t);
             }
         }
     }
@@ -227,9 +235,9 @@ public class AZURE_PING extends FILE_PING {
             boolean deleted = blobClient.deleteIfExists();
 
             if (deleted) {
-                log.debug("Tried to delete file '%s' but it was already deleted.", filename);
+                log.debug("Deleted file '%s'.", filename);
             } else {
-                log.trace("Deleted file '%s'.", filename);
+                log.debug("Tried to delete file '%s' but it was already deleted.", filename);
             }
 
         } catch (Exception ex) {
@@ -243,20 +251,20 @@ public class AZURE_PING extends FILE_PING {
             return;
         }
 
-        clustername = sanitize(clustername);
+        String prefix = getSanitizedPrefix(clustername);
 
-        ListBlobsOptions options = new ListBlobsOptions().setPrefix(clustername);
+        ListBlobsOptions options = new ListBlobsOptions().setPrefix(prefix);
         for (BlobItem blobItem : containerClient.listBlobs(options, null)) {
             try {
                 BlobClient blobClient = containerClient.getBlobClient(blobItem.getName());
                 boolean deleted = blobClient.deleteIfExists();
                 if (deleted) {
-                    log.trace("Deleted file '%s'.", blobItem.getName());
+                    log.debug("Deleted file '%s'.", blobItem.getName());
                 } else {
                     log.debug("Tried to delete file '%s' but it was already deleted.", blobItem.getName());
                 }
             } catch (Exception e) {
-                log.error("Error deleting ping data for cluster '" + clustername + "'.", e);
+                log.error(String.format("Error deleting ping data for cluster '%s'.", clustername), e);
             }
         }
     }
@@ -265,14 +273,14 @@ public class AZURE_PING extends FILE_PING {
      * Converts cluster name and address into a filename.
      */
     protected static String addressToFilename(final String clustername, final Address address) {
-        return sanitize(clustername) + "-" + addressToFilename(address);
+        return getSanitizedPrefix(clustername) + addressToFilename(address);
     }
 
     /**
-     * Sanitizes names replacing backslashes and forward slashes with a dash.
+     * Sanitizes names replacing backslashes and forward slashes with a dash and appends a separator.
      */
-    protected static String sanitize(final String name) {
-        return name.replace('/', '-').replace('\\', '-');
+    protected static String getSanitizedPrefix(final String name) {
+        return name.replace('/', '-').replace('\\', '-') + CLUSTER_ADDRESS_FILE_NAME_SEPARATOR;
     }
 
 
