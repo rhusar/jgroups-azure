@@ -66,6 +66,7 @@ public class AZURE_PING extends FILE_PING {
     @Property(description = "The full blob service endpoint URI. When set, overrides use_https and endpoint_suffix.")
     protected String blob_storage_uri;
 
+    private static final String CLUSTER_ADDRESS_FILE_NAME_SEPARATOR = "-";
     public static final int STREAM_BUFFER_SIZE = 4096;
 
     private BlobContainerClient containerClient;
@@ -150,7 +151,7 @@ public class AZURE_PING extends FILE_PING {
             return;
         }
 
-        String prefix = sanitize(clustername);
+        String prefix = getSanitizedPrefix(clustername);
 
         ListBlobsOptions options = new ListBlobsOptions().setPrefix(prefix);
         for (BlobItem blobItem : containerClient.listBlobs(options, null)) {
@@ -243,9 +244,9 @@ public class AZURE_PING extends FILE_PING {
             return;
         }
 
-        clustername = sanitize(clustername);
+        String prefix = getSanitizedPrefix(clustername);
 
-        ListBlobsOptions options = new ListBlobsOptions().setPrefix(clustername);
+        ListBlobsOptions options = new ListBlobsOptions().setPrefix(prefix);
         for (BlobItem blobItem : containerClient.listBlobs(options, null)) {
             try {
                 BlobClient blobClient = containerClient.getBlobClient(blobItem.getName());
@@ -265,14 +266,14 @@ public class AZURE_PING extends FILE_PING {
      * Converts cluster name and address into a filename.
      */
     protected static String addressToFilename(final String clustername, final Address address) {
-        return sanitize(clustername) + "-" + addressToFilename(address);
+        return getSanitizedPrefix(clustername) + addressToFilename(address);
     }
 
     /**
-     * Sanitizes names replacing backslashes and forward slashes with a dash.
+     * Sanitizes names replacing backslashes and forward slashes with a dash and appends a separator.
      */
-    protected static String sanitize(final String name) {
-        return name.replace('/', '-').replace('\\', '-');
+    protected static String getSanitizedPrefix(final String name) {
+        return name.replace('/', '-').replace('\\', '-') + CLUSTER_ADDRESS_FILE_NAME_SEPARATOR;
     }
 
 
