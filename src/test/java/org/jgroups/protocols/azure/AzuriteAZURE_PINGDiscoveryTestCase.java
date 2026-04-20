@@ -51,8 +51,8 @@ public class AzuriteAZURE_PINGDiscoveryTestCase extends AbstractAZURE_PINGDiscov
     private static final String AZURITE_ACCOUNT_KEY = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";
     private static final int AZURITE_BLOB_PORT = 10000;
 
-    // All known property keys used in the tcp-azure.xml stack file
-    private static final String[] PROPERTY_KEYS = {"azure.connection_string", "azure.blob_storage_uri", "azure.account_name", "azure.access_key", "azure.container"};
+    // All known property keys matching @Property(systemProperty = ...) in AZURE_PING
+    private static final String[] PROPERTY_KEYS = {"JGROUPS_AZURE_CONNECTION_STRING", "JGROUPS_AZURE_BLOB_STORAGE_URI", "JGROUPS_AZURE_STORAGE_ACCOUNT_NAME", "JGROUPS_AZURE_STORAGE_ACCESS_KEY", "JGROUPS_AZURE_CONTAINER"};
 
     private static GenericContainer<?> azurite;
     private static final Map<String, String> savedProperties = new HashMap<>();
@@ -96,17 +96,19 @@ public class AzuriteAZURE_PINGDiscoveryTestCase extends AbstractAZURE_PINGDiscov
 
         String blobEndpoint = "http://" + azurite.getHost() + ":" + azurite.getMappedPort(AZURITE_BLOB_PORT) + "/" + AZURITE_ACCOUNT_NAME;
 
+        System.setProperty("JGROUPS_AZURE_CONTAINER", DEFAULT_CONTAINER);
+
         switch (configurationType) {
             case BLOB_STORAGE_URI:
                 // Configure using individual properties
-                System.setProperty("azure.blob_storage_uri", blobEndpoint);
-                System.setProperty("azure.account_name", AZURITE_ACCOUNT_NAME);
-                System.setProperty("azure.access_key", AZURITE_ACCOUNT_KEY);
+                System.setProperty("JGROUPS_AZURE_BLOB_STORAGE_URI", blobEndpoint);
+                System.setProperty("JGROUPS_AZURE_STORAGE_ACCOUNT_NAME", AZURITE_ACCOUNT_NAME);
+                System.setProperty("JGROUPS_AZURE_STORAGE_ACCESS_KEY", AZURITE_ACCOUNT_KEY);
                 break;
             case CONNECTION_STRING:
                 // Configure using connection string; clear individual credential properties
                 String connectionString = String.format("DefaultEndpointsProtocol=http;AccountName=%s;AccountKey=%s;BlobEndpoint=%s", AZURITE_ACCOUNT_NAME, AZURITE_ACCOUNT_KEY, blobEndpoint);
-                System.setProperty("azure.connection_string", connectionString);
+                System.setProperty("JGROUPS_AZURE_CONNECTION_STRING", connectionString);
                 break;
         }
     }

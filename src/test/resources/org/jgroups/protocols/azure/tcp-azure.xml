@@ -29,12 +29,7 @@
         xmlns="urn:org:jgroups"
         xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.5.xsd">
     <include file="${transport-config:tcp-default.xml}"/>
-    <azure.AZURE_PING container="${azure.container:ping}"
-                      storage_account_name="${azure.account_name:}"
-                      storage_access_key="${azure.access_key:}"
-                      blob_storage_uri="${azure.blob_storage_uri:}"
-                      connection_string="${azure.connection_string:}"
-    />
+    <azure.AZURE_PING/>
     <MERGE3 min_interval="10s"
             max_interval="30s"/>
     <FD_SOCK2/>

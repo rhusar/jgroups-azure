@@ -1,7 +1,7 @@
 = JGroups Azure
 :toc:
 
-image:https://github.com/jgroups-extras/jgroups-azure/workflows/CI/badge.svg[CI,link=https://github.com/jgroups-extras/jgroups-azure/actions]
+image:https://github.com/jgroups-extras/jgroups-azure/workflows/Maven/badge.svg[CI,link=https://github.com/jgroups-extras/jgroups-azure/actions]
 
 Implementation of Azure ping protocol using Azure Storage blobs for http://www.jgroups.org/[JGroups] project using official Microsoft
 Azure Java SDK.
@@ -134,24 +134,56 @@ Or use Maven wrapper for convenience:
 
 == Testing
 
-To run all tests, credentials for Azure are expected. These can be supplied either using individual properties for tests:
-
-----
-export account_name=foo
-export access_key=bar
-mvn test -Dazure.account_name="${account_name}" -Dazure.access_key="${access_key}" -Djava.net.preferIPv4Stack=true
-----
-
-or a connection string can be used:
-
-----
-mvn test -Dazure.connection_string="DefaultEndpointsProtocol=https;AccountName=...;AccountKey=...;EndpointSuffix=core.windows.net"
-----
-
+To run tests against genuine Azure, credentials must be provided.
 If valid credentials are not provided, tests that require them are skipped (using `org.junit.Assume`).
+
+=== Using `DefaultAzureCredential`
+
+When no access key or connection string is provided, `DefaultAzureCredential` is used.
+This requires logging in with Azure CLI and having the `Storage Blob Data Contributor` https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/storage#storage-blob-data-contributor[role] assigned:
+
+[source,shell]
+----
+az login
+
+az group list --output table
+az storage account list --output table
+
+az role assignment create \
+  --assignee "$(az ad signed-in-user show --query id -o tsv)" \
+  --role "Storage Blob Data Contributor" \
+  --scope "/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RESOURCE_GROUP>/providers/Microsoft.Storage/storageAccounts/<ACCOUNT_NAME>"
+----
+
+NOTE: Role assignment propagation can take several minutes after initial assignment.
+
+Then run the tests:
+
+[source,shell]
+----
+mvn test -DJGROUPS_AZURE_STORAGE_ACCOUNT_NAME=<ACCOUNT_NAME>
+----
+
+=== Using access key
+
+[source,shell]
+----
+mvn test -DJGROUPS_AZURE_STORAGE_ACCOUNT_NAME=<ACCOUNT_NAME> -DJGROUPS_AZURE_STORAGE_ACCESS_KEY=<ACCESS_KEY>
+----
+
+=== Using connection string
+
+[source,shell]
+----
+mvn test -DJGROUPS_AZURE_CONNECTION_STRING="DefaultEndpointsProtocol=https;AccountName=...;AccountKey=...;EndpointSuffix=core.windows.net"
+----
+
+=== Azurite (emulated)
 
 There are also variants of the tests that run against a mock Blob service running in a container.
 To run those tests, a valid podman/Docker environment is required.
+
+NOTE: Depending on your testing environment, you may need to append `-Djava.net.preferIPv4Stack=true` if you are having IPv6 configuration issues.
 
 == Support Matrix
 
