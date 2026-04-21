@@ -35,6 +35,9 @@ To find out the storage account values, do the following:
 . Create a new Storage account or navigate to an existing one
 . Navigate to "Security + networking" -> "Access keys" to retrieve the account name and access key or "Connection string"
 
+When using `DefaultAzureCredential` instead of access keys, the `Storage Blob Data Contributor` RBAC role must be assigned to the identity on the storage account.
+See the README for Azure CLI commands to set this up.
+
 == Design
 
 The implementation uses Azure Storage Blob SDK 12.x and extends FILE_PING.
@@ -61,8 +64,7 @@ The shutdown hook inherited from FILE_PING is disabled by default. (since 3.0)
 == Testing
 
 The test suite includes configuration validation unit tests as well as functional discovery tests.
-The functional tests run against both a live Azure Storage endpoint (when credentials are provided) and
-an emulated https://github.com/Azure/Azurite[Azurite] blob service running in a container.
+The functional tests run against both a live Azure Storage endpoint (when credentials are provided) and an emulated https://github.com/Azure/Azurite[Azurite] blob service running in a container. (since 3.0)
 
 == Resources
 

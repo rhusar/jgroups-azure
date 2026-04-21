@@ -29,5 +29,9 @@ public class GenuineAZURE_PINGDiscoveryTestCase extends AbstractAZURE_PINGDiscov
     @BeforeClass
     public static void assumeCredentials() {
         Assume.assumeTrue("Credentials are not available, test will be ignored!", areGenuineCredentialsAvailable());
+
+        if (System.getProperty("JGROUPS_AZURE_CONTAINER") == null) {
+            System.setProperty("JGROUPS_AZURE_CONTAINER", DEFAULT_CONTAINER);
+        }
     }
 }

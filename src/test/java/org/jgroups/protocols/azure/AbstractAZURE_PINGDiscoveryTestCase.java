@@ -35,6 +35,7 @@ import org.junit.Test;
 public abstract class AbstractAZURE_PINGDiscoveryTestCase {
 
     public static final String STACK_XML_CONFIGURATION = "org/jgroups/protocols/azure/tcp-azure.xml";
+    public static final String DEFAULT_CONTAINER = "jgroups-ping-testing";
     public static final int CHANNEL_COUNT = 5;
 
     // The cluster names need to randomized so that multiple test runs can be run in parallel with the same
@@ -42,8 +43,7 @@ public abstract class AbstractAZURE_PINGDiscoveryTestCase {
     public static final String RANDOM_CLUSTER_NAME = UUID.randomUUID().toString();
 
     // Captured at class-load time, before any test's @BeforeClass can set these properties (e.g. Azurite test).
-    private static final boolean GENUINE_CREDENTIALS_AVAILABLE = System.getProperty("azure.connection_string") != null ||
-            (System.getProperty("azure.access_key") != null && System.getProperty("azure.account_name") != null);
+    private static final boolean GENUINE_CREDENTIALS_AVAILABLE = System.getProperty("JGROUPS_AZURE_CONNECTION_STRING") != null || System.getProperty("JGROUPS_AZURE_STORAGE_ACCOUNT_NAME") != null;
 
     static boolean areGenuineCredentialsAvailable() {
         return GENUINE_CREDENTIALS_AVAILABLE;
