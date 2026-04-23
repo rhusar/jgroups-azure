@@ -186,6 +186,12 @@ To run those tests, a valid podman/Docker environment is required.
 
 NOTE: Depending on your testing environment, you may need to append `-Djava.net.preferIPv4Stack=true` if you are having IPv6 configuration issues.
 
+== Reporting Issues
+
+Project JGroups Azure uses GitHub Issues for tracking:
+
+https://github.com/jgroups-extras/jgroups-azure/issues
+
 == Support Matrix
 
 |===
