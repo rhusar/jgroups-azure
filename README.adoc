@@ -49,7 +49,6 @@ Environment variable: `JGROUPS_AZURE_BLOB_STORAGE_URI`
 |
 | The full blob service endpoint URI. When set, overrides `use_https` and `endpoint_suffix`.
 
-
 | `connection_string` +
 Environment variable: `JGROUPS_AZURE_CONNECTION_STRING`
 |
@@ -57,41 +56,47 @@ Environment variable: `JGROUPS_AZURE_CONNECTION_STRING`
 
 |===
 
-=== WildFly 10.1 or later / JBoss EAP 7.0 or later
+All properties are supplied via environment variables or system properties.
+At minimum, `storage_account_name` and `container` are required:
+
+[source,shell]
+----
+export JGROUPS_AZURE_STORAGE_ACCOUNT_NAME=<ACCOUNT_NAME>
+export JGROUPS_AZURE_CONTAINER=jgroups-ping
+----
+
+Authentication is resolved automatically using `DefaultAzureCredential` (e.g. managed identity or `az login`).
+Alternatively, an access key or connection string can be provided — see the <<Properties>> table for the full list of options.
+
+=== WildFly
 
 ==== Using a preconfigured profile
 
-Since WildFly 10.1 the required modules are bundled with the distribution. Users can directly use server profile located at
-`wildfly-<version>/docs/examples/configs/standalone-azure-ha.xml` or replace the discovery protocol in their existing
-server profiles with the following configuration (no need to specify module name):
+WildFly already bundles the required modules in its default distribution.
+Users can directly use server profile located at `wildfly-<version>/docs/examples/configs/standalone-azure-ha.xml`.
 
-[source,xml]
-----
-<protocol type="azure.AZURE_PING">
-     <property name="storage_account_name">
-         ${jboss.jgroups.azure_ping.storage_account_name}
-     </property>
-     <property name="storage_access_key">
-         ${jboss.jgroups.azure_ping.storage_access_key}
-     </property>
-     <property name="container">
-         ${jboss.jgroups.azure_ping.container}
-     </property>
-</protocol>
-----
+==== Upgrading an existing profile
 
-==== Upgrading an existing profile via CLI
-
-To upgrade an existing profile to use TCP stack by default and AZURE_PING protocol via CLI, start `./bin/jboss-cli.sh`
-(or corresponding script on Windows) and run the following batch followed by a reload:
+To update an existing profile to use TCP stack by default and `azure.AZURE_PING` protocol via CLI,
+start `./bin/jboss-cli.sh` and run the following batch:
 
 ----
 batch
 /subsystem=jgroups/channel=ee:write-attribute(name=stack, value=tcp)
 /subsystem=jgroups/stack=tcp/protocol=MPING:remove
-/subsystem=jgroups/stack=tcp/protocol=azure.AZURE_PING:add(add-index=0, properties=[storage_account_name=${jboss.jgroups.azure_ping.storage_account_name:}, storage_access_key=${jboss.jgroups.azure_ping.storage_access_key:}, container=${jboss.jgroups.azure_ping.container:}])
+/subsystem=jgroups/stack=tcp/protocol=azure.AZURE_PING:add(add-index=1)
 run-batch
 reload
+----
+
+NOTE: The `add-index` might require adjusting so that the original discovery protocol is replaced.
+The example assumes `RED` protocol is defined as the first protocol and discovery is defined below it.
+
+Alternatively, users can replace the discovery protocol in their existing server profiles with the following configuration:
+
+[source,xml]
+----
+<protocol type="azure.AZURE_PING"/>
 ----
 
 === Directly in JGroups
@@ -111,11 +116,7 @@ Then add or replace an existing discovery protocol in the stack:
 
 [source,xml]
 ----
-<azure.AZURE_PING
-	storage_account_name="${jboss.jgroups.azure_ping.storage_account_name}"
-	storage_access_key="${jboss.jgroups.azure_ping.storage_access_key}"
-	container="${jboss.jgroups.azure_ping.container:ping}"
-/>
+<azure.AZURE_PING/>
 ----
 
 == Building
@@ -134,8 +135,8 @@ Or use Maven wrapper for convenience:
 
 == Testing
 
-To run tests against genuine Azure, credentials must be provided.
-If valid credentials are not provided, tests that require them are skipped (using `org.junit.Assume`).
+To run tests against genuine Azure, a storage account name must be provided.
+If not provided, tests that require it are skipped (using `org.junit.Assume`).
 
 === Using `DefaultAzureCredential`
 
